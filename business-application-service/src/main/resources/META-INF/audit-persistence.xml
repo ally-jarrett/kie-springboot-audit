@@ -15,6 +15,7 @@
         <properties>
             <property name="hibernate.connection.handling_mode"
                       value="DELAYED_ACQUISITION_AND_RELEASE_AFTER_TRANSACTION"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
         </properties>
     </persistence-unit>
 </persistence>

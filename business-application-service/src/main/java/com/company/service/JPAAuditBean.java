@@ -6,6 +6,7 @@ import org.apache.commons.dbcp2.managed.DataSourceXAConnectionFactory;
 import org.apache.commons.dbcp2.managed.ManagedDataSource;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.h2.jdbcx.JdbcDataSource;
+import org.jbpm.runtime.manager.impl.jpa.EntityManagerFactoryManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
@@ -79,6 +80,7 @@ public class JPAAuditBean {
 
     public Properties jpaAuditProperties() {
         Properties properties = new Properties();
+        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         properties.setProperty("hibernate.show_sql", "true");
         properties.setProperty("hibernate.max_fetch_depth", "3");
         properties.setProperty("hibernate.jdbc.fetch_size", "100");
@@ -93,11 +95,9 @@ public class JPAAuditBean {
         factoryBean.setPersistenceUnitName(AUDIT_PERSISTENCE_UNIT_NAME);
         factoryBean.setPersistenceXmlLocation(PERSISTENCE_XML_LOCATION);
         factoryBean.setJtaDataSource(auditDatasource());
-        factoryBean.setJpaPropertyMap(jpaProperties.getProperties());
-
-        HibernateJpaVendorAdapter adapter = new HibernateJpaVendorAdapter();
-        adapter.setPrepareConnection(false);
-        factoryBean.setJpaVendorAdapter(adapter);
+        //factoryBean.setJpaPropertyMap(jpaProperties.getProperties());
+        factoryBean.setJpaVendorAdapter(jpaVendorAdapter());
+        factoryBean.setJpaProperties(jpaAuditProperties());
         return factoryBean;
     }
 
