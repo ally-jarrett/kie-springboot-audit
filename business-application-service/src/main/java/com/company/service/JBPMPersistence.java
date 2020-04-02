@@ -1,15 +1,8 @@
 package com.company.service;
 
-import org.jbpm.kie.services.impl.FormManagerService;
-import org.jbpm.kie.services.impl.bpmn2.BPMN2DataServiceImpl;
 import org.jbpm.runtime.manager.impl.jpa.EntityManagerFactoryManager;
-import org.jbpm.services.api.DefinitionService;
-import org.jbpm.services.api.DeploymentService;
 import org.jbpm.springboot.autoconfigure.JBPMAutoConfiguration;
 import org.jbpm.springboot.autoconfigure.JBPMProperties;
-import org.jbpm.springboot.services.SpringKModuleDeploymentService;
-import org.kie.api.runtime.manager.RuntimeManagerFactory;
-import org.kie.internal.identity.IdentityProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -33,6 +26,7 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.ClassUtils;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.*;
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -61,6 +55,10 @@ public class JBPMPersistence extends JBPMAutoConfiguration {
     @Qualifier("auditEntityManager")
     EntityManagerFactory auditEMF;
 
+    @PostConstruct
+    public void register() {
+        EntityManagerFactoryManager.get().addEntityManagerFactory("org.jbpm.audit.persistence.jpa", auditEMF);
+    }
 
     /**
      * Define jBPM EMF as Primary
@@ -136,34 +134,4 @@ public class JBPMPersistence extends JBPMAutoConfiguration {
         return factoryBean;
     }
 
-    /**
-     * Register additional EMF for Audit
-     *
-     * @param definitionService
-     * @param runtimeManagerFactory
-     * @param formService
-     * @param entityManagerFactory
-     * @param identityProvider
-     * @return
-     */
-    @Override
-    @Bean(destroyMethod = "shutdown")
-    @ConditionalOnMissingBean(name = {"deploymentService"})
-    public DeploymentService deploymentService(DefinitionService definitionService,
-                                               RuntimeManagerFactory runtimeManagerFactory,
-                                               FormManagerService formService,
-                                               EntityManagerFactory entityManagerFactory,
-                                               IdentityProvider identityProvider) {
-        EntityManagerFactoryManager.get().addEntityManagerFactory("org.jbpm.domain", entityManagerFactory);
-        EntityManagerFactoryManager.get().addEntityManagerFactory("org.jbpm.audit.persistence.jpa", auditEMF);
-        SpringKModuleDeploymentService deploymentService = new SpringKModuleDeploymentService();
-        deploymentService.setBpmn2Service(definitionService);
-        deploymentService.setEmf(entityManagerFactory);
-        deploymentService.setIdentityProvider(identityProvider);
-        deploymentService.setManagerFactory(runtimeManagerFactory);
-        deploymentService.setFormManagerService(formService);
-        deploymentService.setContext(this.applicationContext);
-        deploymentService.addListener((BPMN2DataServiceImpl) definitionService);
-        return deploymentService;
-    }
 }

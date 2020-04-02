@@ -18,6 +18,8 @@ import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
+import javax.annotation.PostConstruct;
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import javax.sql.XADataSource;
 import javax.transaction.TransactionManager;
@@ -33,9 +35,15 @@ public class JPAAuditBean {
 
     @Autowired
     private TransactionManager tm;
+    EntityManagerFactory auditEMF;
 
     protected static final String AUDIT_PERSISTENCE_UNIT_NAME = "org.jbpm.audit.persistence.jpa";
     protected static final String PERSISTENCE_XML_LOCATION = "classpath:/META-INF/audit-persistence.xml";
+
+//    @PostConstruct
+//    private void registerEMF() {
+//        EntityManagerFactoryManager.get().addEntityManagerFactory("org.jbpm.audit.persistence.jpa", auditEMF);
+//    }
 
 //    @Bean(name = "auditDataSource")
 //    public DataSource auditDatasource() {
@@ -58,12 +66,9 @@ public class JPAAuditBean {
 
     @Bean
     public DataSource auditDatasource() {
-        DataSourceXAConnectionFactory dataSourceXAConnectionFactory =
-                new DataSourceXAConnectionFactory(tm, h2DataSource());
-        PoolableConnectionFactory poolableConnectionFactory =
-                new PoolableConnectionFactory(dataSourceXAConnectionFactory, null);
-        GenericObjectPool<PoolableConnection> connectionPool =
-                new GenericObjectPool<>(poolableConnectionFactory);
+        DataSourceXAConnectionFactory dataSourceXAConnectionFactory = new DataSourceXAConnectionFactory(tm, h2DataSource());
+        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(dataSourceXAConnectionFactory, null);
+        GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
         poolableConnectionFactory.setPool(connectionPool);
         return new ManagedDataSource<>(connectionPool,
                 dataSourceXAConnectionFactory.getTransactionRegistry());
@@ -98,6 +103,7 @@ public class JPAAuditBean {
         //factoryBean.setJpaPropertyMap(jpaProperties.getProperties());
         factoryBean.setJpaVendorAdapter(jpaVendorAdapter());
         factoryBean.setJpaProperties(jpaAuditProperties());
+        auditEMF = factoryBean.getObject();
         return factoryBean;
     }
 
